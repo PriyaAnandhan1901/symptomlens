@@ -15,14 +15,14 @@ export default function App() {
 
   const fetchSymptoms = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/symptoms");
+      const res = await axios.get("https://symptomlens-backend-production.up.railway.app/symptoms");
       setSymptoms(res.data);
     } catch (err) { console.error(err); }
   };
 
   const fetchCheckins = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/checkins");
+      const res = await axios.get("https://symptomlens-backend-production.up.railway.app/checkins");
       setCheckins(res.data);
     } catch (err) { console.error(err); }
   };
@@ -48,7 +48,7 @@ export default function App() {
           <h1 style={{ margin:0, color:"white", fontSize:"28px" }}>SymptomLens</h1>
           <div style={{ display:"flex", gap:"8px" }}>
   <button
-    onClick={() => window.open("http://localhost:5000/report/1", "_blank")}
+    onClick={() => window.open("https://symptomlens-backend-production.up.railway.app/report/1", "_blank")}
     style={{ padding:"8px 16px", background:"rgba(255,255,255,0.9)", color:"#667eea", border:"none", borderRadius:"8px", cursor:"pointer", fontWeight:"bold" }}
   >PDF</button>
   <button

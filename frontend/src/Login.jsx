@@ -8,7 +8,7 @@ export default function Login({ onLogin }) {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/auth/login", {
+      const res = await axios.post("https://symptomlens-backend-production.up.railway.app/auth/login"), {
         email,
         password,
       });
