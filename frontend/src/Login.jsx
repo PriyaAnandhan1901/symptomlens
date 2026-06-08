@@ -8,10 +8,9 @@ export default function Login({ onLogin }) {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post("https://symptomlens-backend-production.up.railway.app/auth/login"), {
-        email,
-        password,
-      });
+      const res = await axios.post("https://symptomlens-backend-production.up.railway.app/auth/login", 
+    { email, password }
+);
       localStorage.setItem("token", res.data.token);
       onLogin(res.data.token);
     } catch (err) {
