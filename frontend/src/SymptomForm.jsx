@@ -65,7 +65,7 @@ export default function SymptomForm({ token, onSymptomAdded }) {
   const handleSubmit = async () => {
     try {
       await axios.post(
-       "https://symptomlens-backend-production.up.railway.app/symptoms",
+       "https://serene-elegance-production-f349.up.railway.app/symptoms",
         { user_id: 1, symptom_name: symptomName, severity, notes },
         { headers: { Authorization: `Bearer ${token}` } }
       );

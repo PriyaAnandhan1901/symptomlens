@@ -11,7 +11,7 @@ export default function DailyCheckin({ token, onCheckinAdded }) {
     try {
       const headers = { Authorization: "Bearer " + token };
       await axios.post(
-        "https://symptomlens-backend-production.up.railway.app/checkins",
+        "https://serene-elegance-production-f349.up.railway.app/checkins",
         { user_id: 1, sleep_hours: sleep, stress_level: stress, mood: mood },
         { headers: headers }
       );

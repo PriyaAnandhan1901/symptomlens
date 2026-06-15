@@ -2,13 +2,13 @@ import { useState } from "react";
 import axios from "axios";
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState(" ");
+  const [password, setPassword] = useState(" ");
+  const [error, setError] = useState(" ");
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post("https://symptomlens-backend-production.up.railway.app/auth/login", 
+      const res = await axios.post("https://serene-elegance-production-f349.up.railway.app/auth/login", 
     { email, password }
 );
       localStorage.setItem("token", res.data.token);
