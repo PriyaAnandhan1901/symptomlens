@@ -1,70 +1,147 @@
 import { useState } from "react";
 import axios from "axios";
 
-const BACKEND = "https://serene-elegance-production-f349.up.railway.app";
-
-export default function SymptomForm() {
+export default function SymptomForm({ token, onSymptomAdded }) {
   const [symptomName, setSymptomName] = useState("");
   const [severity, setSeverity] = useState(5);
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState("");
+  const [listening, setListening] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const getUserId = () => {
     try {
-      const token = localStorage.getItem("token");
       const payload = JSON.parse(atob(token.split(".")[1]));
-      const user_id = payload.userId;
+      return payload.userId;
+    } catch {
+      return 1;
+    }
+  };
 
-      await axios.post(`${BACKEND}/symptoms`, {
-        user_id,
-        symptom_name: symptomName,
-        severity: parseInt(severity),
-        notes,
-      });
-      setMessage("Symptom saved successfully!");
+  const handleVoice = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Your browser doesn't support voice input. Use Chrome!");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+
+    setListening(true);
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setListening(false);
+
+      const lower = transcript.toLowerCase();
+      setNotes(transcript);
+
+      const symptoms = ["headache","fatigue","nausea","fever","cough",
+        "pain","dizziness","anxiety","stress","cold","flu","back pain"];
+      const found = symptoms.find((s) => lower.includes(s));
+      if (found) setSymptomName(found);
+      else setSymptomName(transcript.split(" ").slice(0, 2).join(" "));
+
+      const numbers = transcript.match(/\d+/);
+      if (numbers) {
+        const num = parseInt(numbers[0]);
+        if (num >= 1 && num <= 10) setSeverity(num);
+      }
+
+      if (lower.includes("severe") || lower.includes("terrible") || lower.includes("worst")) setSeverity(9);
+      else if (lower.includes("moderate") || lower.includes("bad")) setSeverity(6);
+      else if (lower.includes("mild") || lower.includes("little") || lower.includes("slight")) setSeverity(3);
+
+      setMessage("🎤 Voice captured! Check the form and save.");
+    };
+
+    recognition.onerror = () => {
+      setListening(false);
+      setMessage("❌ Voice error. Try again.");
+    };
+
+    recognition.onend = () => setListening(false);
+    recognition.start();
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const user_id = getUserId();
+      await axios.post(
+        "https://serene-elegance-production-f349.up.railway.app/symptoms",
+        { user_id, symptom_name: symptomName, severity, notes },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessage("✅ Symptom logged successfully!");
       setSymptomName("");
       setSeverity(5);
       setNotes("");
+      onSymptomAdded();
     } catch (err) {
-      setMessage("Error saving symptom: " + err.message);
+      setMessage("❌ Error saving symptom");
     }
   };
 
   return (
-    <div>
-      <h2>Log Symptom</h2>
-      {message && <p>{message}</p>}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Symptom Name:</label>
-          <input
-            type="text"
-            value={symptomName}
-            onChange={(e) => setSymptomName(e.target.value)}
-            required
-          />
+    <div style={{ background:"white", padding:"24px", borderRadius:"16px", boxShadow:"0 4px 20px rgba(0,0,0,0.1)", marginBottom:"24px" }}>
+      <h3 style={{ margin:"0 0 16px", color:"#333" }}>Log a Symptom 📝</h3>
+
+      <button
+        onClick={handleVoice}
+        style={{ width:"100%", padding:"12px", marginBottom:"16px", background: listening ? "#F44336" : "linear-gradient(135deg,#11998e,#38ef7d)", color:"white", border:"none", borderRadius:"8px", fontSize:"15px", cursor:"pointer", fontWeight:"bold" }}
+      >
+        {listening ? "🔴 Listening... Speak now!" : "🎤 Tap to speak your symptom"}
+      </button>
+
+      <div style={{ marginBottom:"16px" }}>
+        <label style={{ display:"block", marginBottom:"6px", color:"#555", fontWeight:"500" }}>Symptom Name</label>
+        <input
+          style={{ width:"100%", padding:"10px 12px", borderRadius:"8px", border:"1px solid #ddd", fontSize:"15px", boxSizing:"border-box" }}
+          placeholder="e.g. headache, fatigue, nausea"
+          value={symptomName}
+          onChange={(e) => setSymptomName(e.target.value)}
+        />
+      </div>
+
+      <div style={{ marginBottom:"16px" }}>
+        <label style={{ display:"block", marginBottom:"6px", color:"#555", fontWeight:"500" }}>
+          Severity: <span style={{ color:"#667eea", fontWeight:"bold", fontSize:"18px" }}>{severity}</span>/10
+        </label>
+        <input
+          type="range" min="1" max="10" value={severity}
+          onChange={(e) => setSeverity(Number(e.target.value))}
+          style={{ width:"100%", accentColor:"#667eea" }}
+        />
+        <div style={{ display:"flex", justifyContent:"space-between", fontSize:"12px", color:"#aaa" }}>
+          <span>Mild</span><span>Moderate</span><span>Severe</span>
         </div>
-        <div>
-          <label>Severity (1-10):</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            value={severity}
-            onChange={(e) => setSeverity(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Notes:</label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-        </div>
-        <button type="submit">Save Symptom</button>
-      </form>
+      </div>
+
+      <div style={{ marginBottom:"16px" }}>
+        <label style={{ display:"block", marginBottom:"6px", color:"#555", fontWeight:"500" }}>Notes (optional)</label>
+        <textarea
+          style={{ width:"100%", padding:"10px 12px", borderRadius:"8px", border:"1px solid #ddd", fontSize:"15px", height:"80px", resize:"none", boxSizing:"border-box" }}
+          placeholder="Any additional details..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+      </div>
+
+      {message && (
+        <p style={{ color: message.includes("✅") || message.includes("🎤") ? "green" : "red", marginBottom:"12px" }}>
+          {message}
+        </p>
+      )}
+
+      <button
+        onClick={handleSubmit}
+        style={{ width:"100%", padding:"12px", background:"linear-gradient(135deg,#667eea,#764ba2)", color:"white", border:"none", borderRadius:"8px", fontSize:"16px", cursor:"pointer", fontWeight:"bold" }}
+      >
+        Save Symptom
+      </button>
     </div>
   );
 }
