@@ -13,7 +13,7 @@ export default function AnomalyDetector({ symptoms }) {
     }
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5001/analyze", {
+      const res = await axios.post("https://supportive-reverence-production-0f9d.up.railway.app/analyze", {
         symptoms: symptoms
       });
       setResults(res.data.results);
