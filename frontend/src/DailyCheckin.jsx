@@ -7,18 +7,28 @@ export default function DailyCheckin({ token, onCheckinAdded }) {
   const [mood, setMood] = useState(5);
   const [message, setMessage] = useState("");
 
+  const getUserId = () => {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.userId;
+    } catch {
+      return 1;
+    }
+  };
+
   const handleSubmit = async () => {
     try {
+      const user_id = getUserId();
       const headers = { Authorization: "Bearer " + token };
       await axios.post(
         "https://serene-elegance-production-f349.up.railway.app/checkins",
-        { user_id: 1, sleep_hours: sleep, stress_level: stress, mood: mood },
+        { user_id, sleep_hours: sleep, stress_level: stress, mood: mood },
         { headers: headers }
       );
-      setMessage("Checkin saved!");
+      setMessage("✅ Checkin saved!");
       onCheckinAdded();
     } catch (err) {
-      setMessage("Error saving checkin");
+      setMessage("❌ Error saving checkin");
     }
   };
 
@@ -63,7 +73,7 @@ export default function DailyCheckin({ token, onCheckinAdded }) {
       </div>
 
       {message && (
-        <p style={{ color:"green", marginBottom:"12px" }}>{message}</p>
+        <p style={{ color: message.includes("✅") ? "green" : "red", marginBottom:"12px" }}>{message}</p>
       )}
 
       <button
