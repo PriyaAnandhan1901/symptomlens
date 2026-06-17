@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import Landing from "./Landing";
 import Login from "./Login";
 import SymptomForm from "./SymptomForm";
 import SymptomList from "./SymptomList";
@@ -8,10 +9,21 @@ import DailyCheckin from "./DailyCheckin";
 import AnomalyDetector from "./AnomalyDetector";
 
 export default function App() {
+  const [showLanding, setShowLanding] = useState(true);
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [symptoms, setSymptoms] = useState([]);
   const [checkins, setCheckins] = useState([]);
   const [activeTab, setActiveTab] = useState("symptoms");
+  const [loading, setLoading] = useState(false);
+
+  const getUserId = () => {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.userId;
+    } catch {
+      return 1;
+    }
+  };
 
   const fetchSymptoms = async () => {
     try {
@@ -28,8 +40,15 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (token) { fetchSymptoms(); fetchCheckins(); }
+    if (token) {
+      setLoading(true);
+      Promise.all([fetchSymptoms(), fetchCheckins()]).finally(() => setLoading(false));
+    }
   }, [token]);
+
+  if (!token && showLanding) {
+    return <Landing onGetStarted={() => setShowLanding(false)} />;
+  }
 
   if (!token) return <Login onLogin={setToken} />;
 
@@ -44,24 +63,24 @@ export default function App() {
     <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#667eea,#764ba2)", padding:"40px 20px" }}>
       <div style={{ maxWidth:"600px", margin:"0 auto" }}>
 
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px", flexWrap:"wrap", gap:"12px" }}>
           <h1 style={{ margin:0, color:"white", fontSize:"28px" }}>SymptomLens</h1>
           <div style={{ display:"flex", gap:"8px" }}>
-  <button
-    onClick={() => window.open("https://serene-elegance-production-f349.up.railway.app/report/1", "_blank")}
-    style={{ padding:"8px 16px", background:"rgba(255,255,255,0.9)", color:"#667eea", border:"none", borderRadius:"8px", cursor:"pointer", fontWeight:"bold" }}
-  >PDF</button>
-  <button
-    onClick={() => { localStorage.removeItem("token"); setToken(null); }}
-    style={{ padding:"8px 16px", background:"rgba(255,255,255,0.2)", color:"white", border:"1px solid rgba(255,255,255,0.4)", borderRadius:"8px", cursor:"pointer" }}
-  >Logout</button>
-</div>
+            <button
+              onClick={() => window.open(`https://serene-elegance-production-f349.up.railway.app/report/${getUserId()}`, "_blank")}
+              style={{ padding:"8px 16px", background:"rgba(255,255,255,0.9)", color:"#667eea", border:"none", borderRadius:"8px", cursor:"pointer", fontWeight:"bold" }}
+            >PDF</button>
+            <button
+              onClick={() => { localStorage.removeItem("token"); setToken(null); setShowLanding(true); }}
+              style={{ padding:"8px 16px", background:"rgba(255,255,255,0.2)", color:"white", border:"1px solid rgba(255,255,255,0.4)", borderRadius:"8px", cursor:"pointer" }}
+            >Logout</button>
+          </div>
         </div>
 
-        <div style={{ display:"flex", gap:"8px", marginBottom:"24px" }}>
+        <div style={{ display:"flex", gap:"8px", marginBottom:"24px", overflowX:"auto" }}>
           {tabs.map((tab) => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              style={{ flex:1, padding:"10px", border:"none", borderRadius:"8px", cursor:"pointer", fontWeight:"500", fontSize:"13px",
+              style={{ flex:"1 0 auto", minWidth:"70px", padding:"10px", border:"none", borderRadius:"8px", cursor:"pointer", fontWeight:"500", fontSize:"13px",
                 background: activeTab === tab.id ? "white" : "rgba(255,255,255,0.2)",
                 color: activeTab === tab.id ? "#667eea" : "white" }}
             >
@@ -70,21 +89,36 @@ export default function App() {
           ))}
         </div>
 
-        {activeTab === "symptoms" && (
+        {loading && (
+          <div style={{ textAlign:"center", color:"white", padding:"20px" }}>
+            <div style={{
+              border: "4px solid rgba(255,255,255,0.3)",
+              borderTop: "4px solid white",
+              borderRadius: "50%",
+              width: "32px",
+              height: "32px",
+              margin: "0 auto",
+              animation: "spin 0.8s linear infinite"
+            }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+
+        {!loading && activeTab === "symptoms" && (
           <div>
             <SymptomForm token={token} onSymptomAdded={fetchSymptoms} />
             <SymptomList symptoms={symptoms} />
           </div>
         )}
 
-        {activeTab === "checkin" && (
+        {!loading && activeTab === "checkin" && (
           <div>
             <DailyCheckin token={token} onCheckinAdded={fetchCheckins} />
             {checkins.length > 0 && (
               <div style={{ background:"white", padding:"24px", borderRadius:"16px", boxShadow:"0 4px 20px rgba(0,0,0,0.1)" }}>
                 <h3 style={{ margin:"0 0 16px", color:"#333" }}>Recent Check-ins</h3>
                 {checkins.slice(0, 5).map((c) => (
-                  <div key={c.id} style={{ padding:"12px", borderRadius:"8px", border:"1px solid #eee", marginBottom:"8px", display:"flex", justifyContent:"space-between" }}>
+                  <div key={c.id} style={{ padding:"12px", borderRadius:"8px", border:"1px solid #eee", marginBottom:"8px", display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:"4px" }}>
                     <span style={{ fontSize:"13px", color:"#666" }}>{new Date(c.checked_in_at).toLocaleDateString()}</span>
                     <span style={{ fontSize:"13px" }}>Sleep: {c.sleep_hours}h</span>
                     <span style={{ fontSize:"13px" }}>Stress: {c.stress_level}</span>
@@ -96,11 +130,11 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === "chart" && (
+        {!loading && activeTab === "chart" && (
           <SeverityChart symptoms={symptoms} />
         )}
 
-        {activeTab === "ai" && (
+        {!loading && activeTab === "ai" && (
           <AnomalyDetector symptoms={symptoms} />
         )}
 
