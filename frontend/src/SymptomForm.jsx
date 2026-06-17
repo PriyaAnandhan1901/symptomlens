@@ -1,12 +1,13 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function SymptomForm({ token, onSymptomAdded }) {
+export default function SymptomForm({ token, onSymptomAdded, showToast }) {
   const [symptomName, setSymptomName] = useState("");
   const [severity, setSeverity] = useState(5);
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState("");
   const [listening, setListening] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const getUserId = () => {
     try {
@@ -68,6 +69,7 @@ export default function SymptomForm({ token, onSymptomAdded }) {
   };
 
   const handleSubmit = async () => {
+    setSaving(true);
     try {
       const user_id = getUserId();
       await axios.post(
@@ -76,13 +78,16 @@ export default function SymptomForm({ token, onSymptomAdded }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage("✅ Symptom logged successfully!");
+      showToast("Symptom logged successfully!", "success");
       setSymptomName("");
       setSeverity(5);
       setNotes("");
       onSymptomAdded();
     } catch (err) {
       setMessage("❌ Error saving symptom");
+      showToast("Error saving symptom", "error");
     }
+    setSaving(false);
   };
 
   return (
@@ -138,9 +143,10 @@ export default function SymptomForm({ token, onSymptomAdded }) {
 
       <button
         onClick={handleSubmit}
-        style={{ width:"100%", padding:"12px", background:"linear-gradient(135deg,#667eea,#764ba2)", color:"white", border:"none", borderRadius:"8px", fontSize:"16px", cursor:"pointer", fontWeight:"bold" }}
+        disabled={saving}
+        style={{ width:"100%", padding:"12px", background: saving ? "#aaa" : "linear-gradient(135deg,#667eea,#764ba2)", color:"white", border:"none", borderRadius:"8px", fontSize:"16px", cursor: saving ? "default" : "pointer", fontWeight:"bold" }}
       >
-        Save Symptom
+        {saving ? "Saving..." : "Save Symptom"}
       </button>
     </div>
   );

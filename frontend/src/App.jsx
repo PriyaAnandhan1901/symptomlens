@@ -7,6 +7,7 @@ import SymptomList from "./SymptomList";
 import SeverityChart from "./SeverityChart";
 import DailyCheckin from "./DailyCheckin";
 import AnomalyDetector from "./AnomalyDetector";
+import Toast from "./Toast";
 
 export default function App() {
   const [showLanding, setShowLanding] = useState(true);
@@ -15,6 +16,12 @@ export default function App() {
   const [checkins, setCheckins] = useState([]);
   const [activeTab, setActiveTab] = useState("symptoms");
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "success" });
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast({ message: "", type: "success" }), 3000);
+  };
 
   const getUserId = () => {
     try {
@@ -61,6 +68,8 @@ export default function App() {
 
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#667eea,#764ba2)", padding:"40px 20px" }}>
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "", type: "success" })} />
+
       <div style={{ maxWidth:"600px", margin:"0 auto" }}>
 
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px", flexWrap:"wrap", gap:"12px" }}>
@@ -106,14 +115,14 @@ export default function App() {
 
         {!loading && activeTab === "symptoms" && (
           <div>
-            <SymptomForm token={token} onSymptomAdded={fetchSymptoms} />
+            <SymptomForm token={token} onSymptomAdded={fetchSymptoms} showToast={showToast} />
             <SymptomList symptoms={symptoms} />
           </div>
         )}
 
         {!loading && activeTab === "checkin" && (
           <div>
-            <DailyCheckin token={token} onCheckinAdded={fetchCheckins} />
+            <DailyCheckin token={token} onCheckinAdded={fetchCheckins} showToast={showToast} />
             {checkins.length > 0 && (
               <div style={{ background:"white", padding:"24px", borderRadius:"16px", boxShadow:"0 4px 20px rgba(0,0,0,0.1)" }}>
                 <h3 style={{ margin:"0 0 16px", color:"#333" }}>Recent Check-ins</h3>

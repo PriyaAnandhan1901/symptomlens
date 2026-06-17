@@ -1,11 +1,12 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function DailyCheckin({ token, onCheckinAdded }) {
+export default function DailyCheckin({ token, onCheckinAdded, showToast }) {
   const [sleep, setSleep] = useState(7);
   const [stress, setStress] = useState(5);
   const [mood, setMood] = useState(5);
   const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const getUserId = () => {
     try {
@@ -17,6 +18,7 @@ export default function DailyCheckin({ token, onCheckinAdded }) {
   };
 
   const handleSubmit = async () => {
+    setSaving(true);
     try {
       const user_id = getUserId();
       const headers = { Authorization: "Bearer " + token };
@@ -26,10 +28,13 @@ export default function DailyCheckin({ token, onCheckinAdded }) {
         { headers: headers }
       );
       setMessage("✅ Checkin saved!");
+      showToast("Checkin saved!", "success");
       onCheckinAdded();
     } catch (err) {
       setMessage("❌ Error saving checkin");
+      showToast("Error saving checkin", "error");
     }
+    setSaving(false);
   };
 
   return (
@@ -78,9 +83,10 @@ export default function DailyCheckin({ token, onCheckinAdded }) {
 
       <button
         onClick={handleSubmit}
-        style={{ width:"100%", padding:"12px", background:"linear-gradient(135deg,#11998e,#38ef7d)", color:"white", border:"none", borderRadius:"8px", fontSize:"16px", cursor:"pointer", fontWeight:"bold" }}
+        disabled={saving}
+        style={{ width:"100%", padding:"12px", background: saving ? "#aaa" : "linear-gradient(135deg,#11998e,#38ef7d)", color:"white", border:"none", borderRadius:"8px", fontSize:"16px", cursor: saving ? "default" : "pointer", fontWeight:"bold" }}
       >
-        Save Checkin
+        {saving ? "Saving..." : "Save Checkin"}
       </button>
     </div>
   );
