@@ -4,7 +4,7 @@ A full-stack health tracking application that lets users log symptoms by voice o
 
 **Live demo:** [https://symptomlens.vercel.app](https://symptomlens.vercel.app)
 
-**Demo video:** [https://youtu.be/mkRGNBnzoVw](#) <https://youtu.be/mkRGNBnzoVw>
+**Demo video:** [Watch on Youtube](#) <https://youtu.be/mkRGNBnzoVw>
 
 ---
 
